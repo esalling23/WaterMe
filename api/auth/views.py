@@ -1,4 +1,5 @@
 # from rest_framework.views import APIView
+import json
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
@@ -16,11 +17,13 @@ class SignUp(generics.CreateAPIView):
     permission_classes = ()
 
     # Serializer classes are required for endpoints that create data
-    serializer_class = UserRegisterSerializer
+    # serializer_class = UserRegisterSerializer
 
     def post(self, request):
+        data = json.loads(request.body.decode('utf8'))
+        print(data)
         # Pass the request data to the serializer to validate it
-        user = UserRegisterSerializer(data=request.data['credentials'])
+        user = UserRegisterSerializer(data=data)
         # If that data is in the correct format...
         if user.is_valid():
             # Actually create the user using the UserSerializer (the `create` method defined there)
@@ -33,6 +36,7 @@ class SignUp(generics.CreateAPIView):
             else:
                 return Response(created_user.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
+            print(user.errors)
             return Response(user.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class SignIn(generics.CreateAPIView):
@@ -45,8 +49,7 @@ class SignIn(generics.CreateAPIView):
     serializer_class = UserSerializer
 
     def post(self, request):
-        creds = request.data['credentials']
-        print(creds)
+        creds = json.loads(request.body.decode('utf8'))
         # We can pass our email and password along with the request to the
         # `authenticate` method. If we had used the default user, we would need
         # to send the `username` instead of `email`.
@@ -81,8 +84,9 @@ class SignOut(generics.DestroyAPIView):
 class ChangePassword(generics.UpdateAPIView):
     def partial_update(self, request):
         user = request.user
+        data = json.loads(request.body.decode('utf8'))
         # Pass data through serializer
-        serializer = ChangePasswordSerializer(data=request.data['passwords'])
+        serializer = ChangePasswordSerializer(data=data['passwords'])
         if serializer.is_valid():
             # This is included with the Django base user model
             # https://docs.djangoproject.com/en/3.1/ref/contrib/auth/#django.contrib.auth.models.User.check_password
