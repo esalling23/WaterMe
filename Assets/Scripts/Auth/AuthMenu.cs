@@ -15,13 +15,8 @@ public class AuthMenu : MonoBehaviour
     [SerializeField]
     GameObject passwordConfInput;
 
-    // Hide/show support
-    [SerializeField]
-    GameObject signUpText;
-    [SerializeField]
-    GameObject signInText;
-
     MenuName currentMenu;
+
     // Sign In Data
     [Serializable]
     private struct SignInData
@@ -45,25 +40,29 @@ public class AuthMenu : MonoBehaviour
 
     void Start()
     {
-        currentMenu = MenuName.SignUp;
+        currentMenu = MenuName.Welcome;
+    }
+
+    void Update()
+    {
+
     }
 
     public void HandleDisplaySignUpForm()
     {
         currentMenu = MenuName.SignUp;
-        passwordConfInput.SetActive(true);
-        signUpText.SetActive(true);
-
-        signInText.SetActive(false);
+        MenuManager.GoToMenu(MenuName.SignUp);
     }
 
     public void HandleDisplaySignInForm()
     {
         currentMenu = MenuName.SignIn;
-        passwordConfInput.SetActive(false);
-        signUpText.SetActive(false);
+        MenuManager.GoToMenu(MenuName.SignIn);
+    }
 
-        signInText.SetActive(true);
+    void HandleDisplayError(object err)
+    {
+        print(err);
     }
 
     public void SubmitAuthForm()
@@ -77,18 +76,39 @@ public class AuthMenu : MonoBehaviour
             // Sign up conditions
             SignUpData formData = new SignUpData { email=email, password=password, password_confirmation=passwordConfirmation };
             string json = JsonUtility.ToJson(formData);
-            StartCoroutine(MakePostRequest("/sign-up/", json));
+            StartCoroutine(MakePostRequest("/sign-up/", json, (data, err) => {
+                if (err != null)
+                {
+                    HandleDisplayError(err);
+                }
+                else
+                {
+                    print(data);
+                    // Automatic sign in?
+                    currentMenu = MenuName.SignIn;
+                    SubmitAuthForm();
+                }
+            }));
         }
         else if (currentMenu == MenuName.SignIn)
         {
             // Sign In conditions
-            SignUpData formData = new SignUpData { email=email, password=password };
+            SignInData formData = new SignInData { email=email, password=password };
             string json = JsonUtility.ToJson(formData);
-            StartCoroutine(MakePostRequest("/sign-up/", json));
+            StartCoroutine(MakePostRequest("/sign-in/", json, (data, err) => {
+                if (err != null)
+                {
+                    HandleDisplayError(err);
+                }
+                else
+                {
+                    print(data);
+                }
+            }));
         }
     }
 
-    IEnumerator MakePostRequest(string endpoint, string jsonData)
+    IEnumerator MakePostRequest(string endpoint, string jsonData, System.Action<object, object> cb)
     {
 
         UnityWebRequest request = new UnityWebRequest(developmentUrl + endpoint, "POST");
@@ -104,12 +124,13 @@ public class AuthMenu : MonoBehaviour
         if (request.result == UnityWebRequest.Result.ConnectionError)
         {
             Debug.Log("Error while sending: " + request.error);
+            cb(request.error, null);
         }
         else
         {
             Debug.Log(request.result);
             Debug.Log(request.error);
+            cb(null, request.result);
         }
-
     }
 }
