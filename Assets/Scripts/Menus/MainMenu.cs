@@ -42,8 +42,8 @@ public class MainMenu : MonoBehaviour
 
     void SetOverlayText()
     {
-        goalText.text = AppManager.DailyGoal.ToString();
-        todayTotalText.text = AppManager.TodayConsumed.ToString();
+        goalText.text = AppManager.DailyGoal.ToString() + "oz";
+        todayTotalText.text = AppManager.TodayConsumed.ToString() + "oz";
     }
 
     void SetWaterHeight()

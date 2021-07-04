@@ -34,18 +34,36 @@ public static class AppManager
     public static void Init()
     {
         // TO DO: Load stored data
+        LoadData();
     }
 
     public static void DrinkWater(float amount)
     {
         // TO DO: Update stored data
         today_consumed += amount;
+        SaveSystem.SaveData();
     }
 
     public static void UpdateGoal(float goal)
     {
         // TO DO: Update stored data
         daily_goal = goal;
+        SaveSystem.SaveData();
+    }
+
+    public static void LoadData()
+    {
+        UserData data = SaveSystem.LoadData();
+
+        if (data != null)
+        {
+            daily_goal = data.current_goal;
+            today_consumed = data.today_consumed;
+        }
+        else
+        {
+            Debug.Log("No data to load");
+        }
     }
 
     #endregion
